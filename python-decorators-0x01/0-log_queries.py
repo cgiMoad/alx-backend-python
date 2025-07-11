@@ -1,7 +1,7 @@
 import sqlite3
 import functools
 
-#### decorator to log SQL queries
+#### decorator to lof SQL queries
 
 def log_queries(func):
     """Decorator that logs SQL queries before executing them."""

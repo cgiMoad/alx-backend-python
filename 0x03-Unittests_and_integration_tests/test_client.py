@@ -4,23 +4,22 @@
 from client import GithubOrgClient
 from fixtures import TEST_PAYLOAD
 from parameterized import parameterized, parameterized_class
-import json
 import unittest
-from unittest.mock import patch, PropertyMock, Mock
+from unittest.mock import patch, PropertyMock
 
 
 class TestGithubOrgClient(unittest.TestCase):
     """ Class for Testing Github Org Client """
 
     @parameterized.expand([
-        ('google'),
-        ('abc')
+        ('google',),
+        ('abc',)
     ])
-    @patch('client.get_json')
+    @patch('utils.get_json')  # patch utils.get_json (not client.get_json)
     def test_org(self, input, mock):
         """Test that GithubOrgClient.org returns the correct value"""
         test_class = GithubOrgClient(input)
-        test_class.org()
+        _ = test_class.org  # Access the property
         mock.assert_called_once_with(f'https://api.github.com/orgs/{input}')
 
     def test_public_repos_url(self):
@@ -35,7 +34,7 @@ class TestGithubOrgClient(unittest.TestCase):
             result = test_class._public_repos_url
             self.assertEqual(result, payload["repos_url"])
 
-    @patch('client.get_json')
+    @patch('utils.get_json')  # patch utils.get_json again here
     def test_public_repos(self, mock_json):
         """
         Test that the list of repos is what you expect from the chosen payload.
@@ -51,8 +50,8 @@ class TestGithubOrgClient(unittest.TestCase):
             test_class = GithubOrgClient('test')
             result = test_class.public_repos()
 
-            check = [i["name"] for i in json_payload]
-            self.assertEqual(result, check)
+            expected = [repo["name"] for repo in json_payload]
+            self.assertEqual(result, expected)
 
             mock_public.assert_called_once()
             mock_json.assert_called_once()
@@ -76,22 +75,12 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        """A class method called before tests in an individual class are run"""
-        # def my_side_effect(url):
-        #     """ Side Effect function for test """
-        #     test_url = "https://api.github.com/orgs/google"
-        #     if url == test_url:
-        #         return cls.org_payload
-        #     return cls.repos_payload
-
-        config = {'return_value.json.side_effect':
-                  [
-                      cls.org_payload, cls.repos_payload,
-                      cls.org_payload, cls.repos_payload
-                  ]
-                  }
-        cls.get_patcher = patch('requests.get', **config)
-
+        """Setup patching on utils.requests.get"""
+        config = {'return_value.json.side_effect': [
+            cls.org_payload, cls.repos_payload,
+            cls.org_payload, cls.repos_payload
+        ]}
+        cls.get_patcher = patch('utils.requests.get', **config)
         cls.mock = cls.get_patcher.start()
 
     def test_public_repos(self):
@@ -110,11 +99,10 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
 
         self.assertEqual(test_class.public_repos(), self.expected_repos)
         self.assertEqual(test_class.public_repos("XLICENSE"), [])
-        self.assertEqual(test_class.public_repos(
-            "apache-2.0"), self.apache2_repos)
+        self.assertEqual(test_class.public_repos("apache-2.0"), self.apache2_repos)
         self.mock.assert_called()
 
     @classmethod
     def tearDownClass(cls):
-        """A class method called after tests in an individual class have run"""
+        """Stop patching after tests"""
         cls.get_patcher.stop()

@@ -138,5 +138,5 @@ STATIC_URL = 'static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
-
+["rest_framework.permissions.IsAuthenticated"]
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

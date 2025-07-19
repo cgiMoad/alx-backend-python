@@ -6,7 +6,7 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-
+["api-auth"]
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('chats.urls')),
